@@ -3,8 +3,9 @@ import { gsap } from 'gsap';
 import { useGameStore } from '@/store/gameStore';
 import { usePhysics } from '@/hooks/usePhysics';
 import { Character } from './Character';
-import { getToolDamage } from '@/data/parts';
+import { getToolDamage, TOOLS } from '@/data/parts';
 import type { ToolId } from '@/store/gameStore';
+import { audioManager } from '@/utils/audio';
 
 export interface UsePhysicsReturn {
   partRefs: React.MutableRefObject<Record<string, HTMLElement | null>>;
@@ -57,6 +58,8 @@ export function Stage() {
   const [floaters, setFloaters] = useState<FloatingText[]>([]);
   const [taunt, setTaunt] = useState<string>('');
   const [scale, setScale] = useState(1);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isFiring, setIsFiring] = useState(false);
   const slingDrag = useRef<{ active: boolean; startX: number; startY: number; curX: number; curY: number } | null>(null);
   const animRef = useRef<number>();
 
@@ -107,7 +110,7 @@ export function Stage() {
           setCharacterState('blink');
           setTimeout(() => {
             if (useGameStore.getState().characterState === 'blink') {
-              setCharacterState('normal');
+              setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal');
             }
           }, 150); // Blink duration
         }
@@ -132,26 +135,47 @@ export function Stage() {
       registerHit(damage, x, y);
       addFloater(x, y, `-${damage}`, 'damage');
 
+      // Play screams only if score >= 1000
+      if (useGameStore.getState().score >= 1000) {
+        audioManager.playScreamRoundRobin();
+        setCharacterState('scared');
+      }
+
+      const isScared = useGameStore.getState().score >= 1000;
+
       if (tool === 'lightning') {
         physics.flash('rgba(255,255,255,0.7)');
         physics.shakeScreen(18);
         setBurntUntil(Date.now() + 1200);
-        setCharacterState('burnt');
-        setTimeout(() => setCharacterState('normal'), 1200);
+        setCharacterState(isScared ? 'scared' : 'burnt');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 1200);
       } else if (tool === 'ice') {
         physics.flash('rgba(168,216,255,0.5)');
         setFrozenUntil(Date.now() + 1500);
-        setCharacterState('frozen');
-        setTimeout(() => setCharacterState('normal'), 1500);
+        setCharacterState(isScared ? 'scared' : 'frozen');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 1500);
       } else if (tool === 'bat') {
         physics.shakeScreen(22);
         setDizzyUntil(Date.now() + 1000);
-        setCharacterState('dizzy');
-        setTimeout(() => setCharacterState('normal'), 1000);
+        setCharacterState(isScared ? 'scared' : 'dizzy');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 1000);
+      } else if (tool === 'shotgun') {
+        physics.shakeScreen(40);
+        physics.flash('rgba(255,255,200,0.4)');
+        setCharacterState(isScared ? 'scared' : 'hurt');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 300);
+      } else if (tool === 'rifle') {
+        physics.shakeScreen(15);
+        setCharacterState(isScared ? 'scared' : 'hurt');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 250);
+      } else if (tool === 'axe') {
+        physics.shakeScreen(25);
+        setCharacterState(isScared ? 'scared' : 'hurt');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 250);
       } else {
         physics.shakeScreen(10);
-        setCharacterState('hurt');
-        setTimeout(() => setCharacterState('normal'), 250);
+        setCharacterState(isScared ? 'scared' : 'hurt');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 250);
       }
     },
     [addFloater, physics, registerHit, setBurntUntil, setCharacterState, setDizzyUntil, setFrozenUntil]
@@ -170,6 +194,21 @@ export function Stage() {
 
   const handleStagePointerDown = useCallback(
     (e: React.PointerEvent) => {
+      const toolInfo = TOOLS.find(t => t.id === selectedTool);
+      if (toolInfo && toolInfo.icon && selectedTool !== 'slingshot') {
+        setIsFiring(true);
+        setTimeout(() => setIsFiring(false), 100);
+        audioManager.playWeapon(selectedTool);
+        
+        // If clicking on the background (not the character), trigger a global hit from the mouse angle
+        if ((e.target as HTMLElement).tagName !== 'IMG') {
+          const rect = physics.stageRef.current?.getBoundingClientRect();
+          if (rect) {
+            gamePhysics.applyGroupImpulse(e.clientX, e.clientY, 100, selectedTool);
+          }
+        }
+      }
+
       if (selectedTool !== 'slingshot') return;
       const rect = physics.stageRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -183,6 +222,8 @@ export function Stage() {
 
   const handleStagePointerMove = useCallback(
     (e: React.PointerEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+
       if (!slingDrag.current?.active) return;
       const rect = physics.stageRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -285,7 +326,7 @@ export function Stage() {
 
   return (
     <div
-      className="relative flex-1 overflow-hidden select-none"
+      className={`relative flex-1 overflow-hidden select-none ${TOOLS.find(t => t.id === selectedTool)?.icon && selectedTool !== 'slingshot' ? 'cursor-none' : ''}`}
       style={{ perspective: '800px' }}
       onPointerDown={handleStagePointerDown}
       onPointerMove={handleStagePointerMove}
@@ -368,6 +409,64 @@ export function Stage() {
           {f.text}
         </div>
       ))}
+
+      {(() => {
+        const toolInfo = TOOLS.find(t => t.id === selectedTool);
+        if (toolInfo && toolInfo.icon && selectedTool !== 'slingshot') {
+          // Calculate angle from mouse to center of screen (target)
+          const dx = center.x - mousePos.x;
+          const dy = center.y - mousePos.y;
+          // Calculate angle in degrees
+          let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+          
+          // Assuming weapons point LEFT natively (e.g. pistol facing left)
+          // To point it at the character, we add 180 degrees
+          let displayAngle = angle + 180;
+          let scaleY = 1;
+          
+          // Keep it upright if it rotates to the right side
+          if (Math.abs(angle) < 90) {
+            scaleY = -1;
+          }
+
+          return (
+            <div
+              className="absolute pointer-events-none z-50 flex items-center justify-center"
+              style={{
+                left: mousePos.x,
+                top: mousePos.y,
+                transform: `translate(-50%, -50%) rotate(${displayAngle}deg) scaleY(${scaleY}) ${
+                  isFiring ? 'translateX(-30px)' : '' // Recoil
+                }`,
+                transition: 'transform 0.05s ease-out',
+                width: 120,
+                height: 120,
+              }}
+            >
+              <img
+                src={toolInfo.icon}
+                alt={toolInfo.name}
+                className="w-full h-full object-contain drop-shadow-lg"
+              />
+              {/* Muzzle Flash Effect (at the left tip of the weapon) */}
+              {isFiring && (
+                <div 
+                  className="absolute bg-yellow-300 rounded-full blur-md opacity-90 mix-blend-screen"
+                  style={{
+                    left: '-10%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '60px',
+                    height: '60px',
+                    boxShadow: '0 0 20px 10px rgba(255, 200, 0, 0.8)'
+                  }}
+                />
+              )}
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {characterState === 'burnt' && (
         <div className="absolute inset-0 pointer-events-none z-30 mix-blend-overlay bg-amber-900/40 transition-colors duration-300" />

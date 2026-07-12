@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-export type ToolId = 'fist' | 'slipper' | 'bat' | 'lightning' | 'ice' | 'slingshot';
-export type CharacterState = 'normal' | 'hurt' | 'dizzy' | 'frozen' | 'burnt' | 'openMouth' | 'closedEyes' | 'angry' | 'exhausted' | 'comboing' | 'blink';
+export type ToolId = 'fist' | 'slipper' | 'bat' | 'lightning' | 'ice' | 'slingshot' | 'axe' | 'katana' | 'pistol' | 'rifle' | 'shotgun';
+export type CharacterState = 'normal' | 'hurt' | 'dizzy' | 'frozen' | 'burnt' | 'openMouth' | 'closedEyes' | 'angry' | 'exhausted' | 'comboing' | 'blink' | 'scared';
 
 export interface CharacterPart {
   id: string;

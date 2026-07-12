@@ -19,9 +19,10 @@ export function Part({ part, center, onImpulse, onGroupImpulse, setRef, recordBa
   const selectedTool = useGameStore((s) => s.selectedTool);
   const setPartTransform = useGameStore((s) => s.setPartTransform);
   const frozenUntil = useGameStore((s) => s.frozenUntil);
+  const characterState = useGameStore((s) => s.characterState);
   const isFrozen = Date.now() < frozenUntil;
 
-  const idleRef = useIdleAnimation(part.id, isVisible);
+  const idleRef = useIdleAnimation(part.id, isVisible, characterState);
 
   const updateTransform = useCallback(() => {
     const el = elRef.current;
@@ -47,7 +48,6 @@ export function Part({ part, center, onImpulse, onGroupImpulse, setRef, recordBa
       if ((selectedTool as string) === 'slingshot') return; // Let Stage handle slingshot dragging
       
       e.preventDefault();
-      e.stopPropagation();
       const el = elRef.current;
       if (!el) return;
 

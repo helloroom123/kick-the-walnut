@@ -271,6 +271,81 @@ export const BASE_PARTS: CharacterPart[] = [
     width: 800,
     height: 600,
   },
+  {
+    id: 'scaredEyes',
+    src: '/assets/红眼框.png',
+    x: 0,
+    y: 0,
+    rotation: 0,
+    scale: 1,
+    zIndex: 21,
+    pivotX: 0.5,
+    pivotY: 0.5,
+    originX: 0,
+    originY: 0,
+    width: 800,
+    height: 600,
+  },
+  {
+    id: 'scaredTears',
+    src: '/assets/红眼眶-眼泪.png',
+    x: 0,
+    y: 0,
+    rotation: 0,
+    scale: 1,
+    zIndex: 21,
+    pivotX: 0.5,
+    pivotY: 0.5,
+    originX: 0,
+    originY: 0,
+    width: 800,
+    height: 600,
+  },
+  {
+    id: 'scaredPupils',
+    src: '/assets/害怕-缩瞳眼珠.png',
+    x: 0,
+    y: 0,
+    rotation: 0,
+    scale: 1,
+    zIndex: 21,
+    pivotX: 0.5,
+    pivotY: 0.5,
+    originX: 0,
+    originY: 0,
+    width: 800,
+    height: 600,
+  },
+  {
+    id: 'scaredFace',
+    src: '/assets/害怕-青脸.png',
+    x: 0,
+    y: 0,
+    rotation: 0,
+    scale: 1,
+    zIndex: 20,
+    pivotX: 0.5,
+    pivotY: 0.5,
+    originX: 0,
+    originY: 0,
+    width: 800,
+    height: 600,
+  },
+  {
+    id: 'scaredMouth',
+    src: '/assets/害怕-张嘴.png',
+    x: 0,
+    y: 0,
+    rotation: 0,
+    scale: 1,
+    zIndex: 22,
+    pivotX: 0.5,
+    pivotY: 0.65,
+    originX: 0,
+    originY: 0,
+    width: 800,
+    height: 600,
+  },
 ];
 
 export function getDefaultParts(): CharacterPart[] {
@@ -278,25 +353,33 @@ export function getDefaultParts(): CharacterPart[] {
 }
 
 export function isPartVisible(id: string, state: string): boolean {
-  // Eyes logic
+  const isScared = state === 'scared';
   const isAngry = state === 'angry';
   const isHurt = state === 'hurt' || state === 'burnt';
   const isClosed = state === 'closedEyes' || state === 'dizzy' || state === 'frozen' || state === 'blink';
   
+  if (id === 'scaredEyes') return isScared;
+  if (id === 'scaredTears') return isScared;
+  if (id === 'scaredPupils') return isScared;
+  if (id === 'scaredFace') return isScared;
+  if (id === 'scaredMouth') return isScared;
+
   if (id === 'angryEyes') return isAngry;
-  if (id === 'hurtEyes') return isHurt;
-  if (id === 'closedEyes') return isClosed;
-  if (id === 'eyes') return !isAngry && !isHurt && !isClosed;
+  if (id === 'hurtEyes') return isHurt && !isScared;
+  if (id === 'closedEyes') return isClosed && !isScared;
+  if (id === 'eyes') return !isAngry && !isHurt && !isClosed && !isScared;
+
+  if (id === 'face') return !isScared;
 
   // Mouth logic
   const isBreathe = state === 'exhausted' || state === 'burnt';
   const isTeeth = state === 'comboing' || state === 'angry';
   const isOpen = state === 'openMouth' || state === 'dizzy' || state === 'hurt';
 
-  if (id === 'breatheMouth') return isBreathe;
-  if (id === 'teethMouth') return isTeeth;
-  if (id === 'openMouth') return isOpen;
-  if (id === 'mouth') return !isBreathe && !isTeeth && !isOpen;
+  if (id === 'breatheMouth') return isBreathe && !isScared;
+  if (id === 'teethMouth') return isTeeth && !isScared;
+  if (id === 'openMouth') return isOpen && !isScared;
+  if (id === 'mouth') return !isBreathe && !isTeeth && !isOpen && !isScared;
 
   return true;
 }
@@ -309,6 +392,11 @@ export function getToolDamage(tool: string): number {
     case 'lightning': return 28;
     case 'ice': return 8;
     case 'slingshot': return 40;
+    case 'axe': return 50;
+    case 'katana': return 55;
+    case 'pistol': return 45;
+    case 'rifle': return 60;
+    case 'shotgun': return 80;
     default: return 10;
   }
 }
@@ -321,15 +409,25 @@ export function getToolEmoji(tool: string): string {
     case 'lightning': return '⚡';
     case 'ice': return '🧊';
     case 'slingshot': return '🎯';
+    case 'axe': return '🪓';
+    case 'katana': return '🗡️';
+    case 'pistol': return '🔫';
+    case 'rifle': return '🔫';
+    case 'shotgun': return '🔫';
     default: return '👋';
   }
 }
 
-export const TOOLS: { id: string; name: string; emoji: string }[] = [
+export const TOOLS: { id: string; name: string; emoji: string; icon?: string }[] = [
   { id: 'fist', name: '拳头', emoji: '👊' },
   { id: 'slipper', name: '拖鞋', emoji: '🩴' },
-  { id: 'bat', name: '球棒', emoji: '🏏' },
+  { id: 'bat', name: '球棒', emoji: '🏏', icon: '/assets/weapons/bat.png' },
   { id: 'lightning', name: '闪电', emoji: '⚡' },
   { id: 'ice', name: '冰冻', emoji: '🧊' },
   { id: 'slingshot', name: '弹弓', emoji: '🎯' },
+  { id: 'axe', name: '斧头', emoji: '🪓', icon: '/assets/weapons/axe.png' },
+  { id: 'katana', name: '武士刀', emoji: '🗡️', icon: '/assets/weapons/katana.png' },
+  { id: 'pistol', name: '手枪', emoji: '🔫', icon: '/assets/weapons/pistol.png' },
+  { id: 'rifle', name: '步枪', emoji: '🔫', icon: '/assets/weapons/rifle.png' },
+  { id: 'shotgun', name: '霰弹枪', emoji: '🔫', icon: '/assets/weapons/shotgun.png' },
 ];

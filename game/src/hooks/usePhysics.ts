@@ -69,12 +69,38 @@ export function usePhysics() {
       const falloff = Math.max(0.1, 1 - dist / 600);
 
       let rot = 0;
-      if (tool === 'slipper') rot = nx * 30;
-      else if (tool === 'bat') rot = ny * 40 + nx * 20;
-      else if (tool === 'lightning') rot = lightningRot;
-      else rot = (nx + ny) * 25;
+      let finalNx = nx;
+      let finalNy = ny;
+      let finalForce = force;
 
-      applyImpulse(id, nx * force * falloff * 0.9, ny * force * falloff * 0.9, rot * falloff);
+      if (tool === 'slipper') {
+        rot = nx * 30;
+      } else if (tool === 'bat') {
+        rot = ny * 40 + nx * 20;
+      } else if (tool === 'lightning') {
+        rot = lightningRot;
+      } else if (tool === 'axe') {
+        rot = nx * 45;
+        finalNy = Math.max(0.5, ny); 
+        finalForce *= 1.2;
+      } else if (tool === 'katana') {
+        rot = (nx - ny) * 35;
+        finalNx = nx * 1.5;
+        finalNy = ny * 0.5;
+      } else if (tool === 'pistol') {
+        rot = (Math.random() - 0.5) * 10;
+      } else if (tool === 'rifle') {
+        rot = (Math.random() - 0.5) * 15;
+      } else if (tool === 'shotgun') {
+        rot = (Math.random() - 0.5) * 100;
+        finalNx += (Math.random() - 0.5) * 2;
+        finalNy += (Math.random() - 0.5) * 2;
+        finalForce *= 1.5;
+      } else {
+        rot = (nx + ny) * 25;
+      }
+
+      applyImpulse(id, finalNx * finalForce * falloff * 0.9, finalNy * finalForce * falloff * 0.9, rot * falloff);
     });
   }, [applyImpulse]);
 

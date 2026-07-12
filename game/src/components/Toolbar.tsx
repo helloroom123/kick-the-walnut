@@ -26,7 +26,11 @@ export function Toolbar() {
               ].join(' ')}
               title={tool.name}
             >
-              <span className="text-xl sm:text-2xl drop-shadow-sm">{tool.emoji}</span>
+              {tool.icon ? (
+                <img src={tool.icon} alt={tool.name} className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md" />
+              ) : (
+                <span className="text-xl sm:text-2xl drop-shadow-sm">{tool.emoji}</span>
+              )}
               <span className="text-[9px] sm:text-[10px] font-bold mt-0.5">{tool.name}</span>
               {active && (
                 <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-pink-500 rounded-full border-2 border-white" />

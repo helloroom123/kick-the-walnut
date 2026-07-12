@@ -1,12 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 
-export function useIdleAnimation(id: string, isVisible: boolean) {
+export function useIdleAnimation(id: string, isVisible: boolean, characterState: string) {
   const idleRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const el = idleRef.current;
     if (!el || !isVisible) return;
+
+    // Handle "scared" pose (holding head)
+    if (characterState === 'scared') {
+      if (id === 'leftHand') {
+        gsap.to(el, { rotation: 120, x: 20, y: -40, duration: 0.3, ease: 'power2.out' });
+        return;
+      }
+      if (id === 'rightHand') {
+        gsap.to(el, { rotation: -120, x: -20, y: -40, duration: 0.3, ease: 'power2.out' });
+        return;
+      }
+    }
 
     // Give each part a slightly different phase and animation to make it feel organic
     const t = gsap.timeline({ repeat: -1, yoyo: true });
@@ -49,7 +61,7 @@ export function useIdleAnimation(id: string, isVisible: boolean) {
       t.kill();
       gsap.set(el, { clearProps: 'all' });
     };
-  }, [id, isVisible]);
+  }, [id, isVisible, characterState]);
 
   return idleRef;
 }
