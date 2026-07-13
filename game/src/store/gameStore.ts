@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-export type ToolId = 'fist' | 'slipper' | 'bat' | 'lightning' | 'ice' | 'slingshot' | 'axe' | 'katana' | 'pistol' | 'rifle' | 'shotgun';
-export type CharacterState = 'normal' | 'hurt' | 'dizzy' | 'frozen' | 'burnt' | 'openMouth' | 'closedEyes' | 'angry' | 'exhausted' | 'comboing' | 'blink' | 'scared';
+export type ToolId = 'fist' | 'slipper' | 'bat' | 'whip' | 'lightning' | 'ice' | 'slingshot' | 'axe' | 'katana' | 'pistol' | 'rifle' | 'shotgun';
+export type CharacterState = 'normal' | 'hurt' | 'dizzy' | 'frozen' | 'burnt' | 'openMouth' | 'closedEyes' | 'angry' | 'exhausted' | 'comboing' | 'blink' | 'scared' | 'mocking' | 'disappointed' | 'drooling' | 'slightlyScared';
 
 export interface CharacterPart {
   id: string;
@@ -18,6 +18,15 @@ export interface CharacterPart {
   width: number;
   height: number;
   parentId?: string;
+}
+
+export interface Scar {
+  id: string;
+  x: number;
+  y: number;
+  src: string;
+  rotation: number;
+  scale: number;
 }
 
 export interface HitRecord {
@@ -43,6 +52,9 @@ export interface GameState {
   lastHitAt: number;
   muted: boolean;
   slingshotAnchor: { x: number; y: number } | null;
+  partVisibilityOverrides: Record<string, boolean>;
+  dismemberedParts: string[];
+  scars: Scar[];
 
   increaseScore: (delta: number) => void;
   breakCombo: () => void;
@@ -50,6 +62,9 @@ export interface GameState {
   setTool: (tool: ToolId) => void;
   setCharacterState: (state: CharacterState) => void;
   setPartTransform: (id: string, updates: Partial<CharacterPart>) => void;
+  setPartVisibilityOverride: (id: string, visible: boolean | null) => void;
+  dismember: (partId: string) => void;
+  addScar: (x: number, y: number, src: string, rotation: number, scale: number) => void;
   resetCharacter: () => void;
   toggleMute: () => void;
   setSlingshotAnchor: (pos: { x: number; y: number } | null) => void;
@@ -94,6 +109,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastHitAt: 0,
   muted: false,
   slingshotAnchor: null,
+  partVisibilityOverrides: {},
+  dismemberedParts: [],
+  scars: [],
 
   increaseScore: (delta) => {
     const state = get();
@@ -143,7 +161,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
   },
 
-  resetCharacter: () => set((state) => ({ score: 0, combo: 0, hits: [], characterState: 'normal' })),
+  setPartVisibilityOverride: (id, visible) => set((state) => ({
+    partVisibilityOverrides: { ...state.partVisibilityOverrides, [id]: visible === null ? false : visible }
+  })),
+
+  dismember: (partId) => set((state) => {
+    if (!state.dismemberedParts.includes(partId)) {
+      return { dismemberedParts: [...state.dismemberedParts, partId] };
+    }
+    return {};
+  }),
+
+  addScar: (x, y, src, rotation, scale) => set((state) => ({
+    scars: [...state.scars, { id: `${Date.now()}-${Math.random()}`, x, y, src, rotation, scale }]
+  })),
+
+  resetCharacter: () => set({ score: 0, combo: 0, hits: [], characterState: 'normal', dismemberedParts: [], partVisibilityOverrides: {}, scars: [] }),
   toggleMute: () => set((state) => ({ muted: !state.muted })),
   setSlingshotAnchor: (pos) => set({ slingshotAnchor: pos }),
   setFrozenUntil: (ts) => set({ frozenUntil: ts }),

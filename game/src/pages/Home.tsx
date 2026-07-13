@@ -1,6 +1,8 @@
 import { Stage } from '@/components/Stage';
 import { Toolbar } from '@/components/Toolbar';
 import { Hud } from '@/components/Hud';
+import { DebugPanel } from '@/components/DebugPanel';
+import { PresetExpressions } from '@/components/PresetExpressions';
 
 export default function Home() {
   return (
@@ -8,6 +10,8 @@ export default function Home() {
       <Hud />
       <Stage />
       <Toolbar />
+      <DebugPanel />
+      <PresetExpressions />
     </div>
   );
 }

@@ -1,0 +1,13 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/test",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/test.ts:onRequest"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

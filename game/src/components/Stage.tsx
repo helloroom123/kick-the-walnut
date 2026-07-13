@@ -143,7 +143,16 @@ export function Stage() {
 
       const isScared = useGameStore.getState().score >= 1000;
 
+      // Dismemberment chance with bladed weapons
+      if (tool === 'katana' || tool === 'axe') {
+        if (Math.random() < 0.3) {
+          const part = Math.random() < 0.5 ? 'leftHand' : 'rightHand';
+          useGameStore.getState().dismember(part);
+        }
+      }
+
       if (tool === 'lightning') {
+        audioManager.playWeapon('lightning');
         physics.flash('rgba(255,255,255,0.7)');
         physics.shakeScreen(18);
         setBurntUntil(Date.now() + 1200);
@@ -172,6 +181,10 @@ export function Stage() {
         physics.shakeScreen(25);
         setCharacterState(isScared ? 'scared' : 'hurt');
         setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 250);
+      } else if (tool === 'whip') {
+        physics.shakeScreen(12);
+        setCharacterState(isScared ? 'scared' : 'hurt');
+        setTimeout(() => setCharacterState(useGameStore.getState().score >= 1000 ? 'scared' : 'normal'), 300);
       } else {
         physics.shakeScreen(10);
         setCharacterState(isScared ? 'scared' : 'hurt');
@@ -368,6 +381,8 @@ export function Stage() {
           </div>
         </div>
       </div>
+
+
 
       {projectiles.map((p) => (
         <div

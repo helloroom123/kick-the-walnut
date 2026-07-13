@@ -25,6 +25,7 @@ const WEAPON_SOUNDS: Record<string, string[]> = {
   bat: ['/assets/sounds/hl2/crowbar_impact1.wav'],
   fist: ['/assets/sounds/hl2/crowbar_impact1.wav'],
   slipper: ['/assets/sounds/hl2/crowbar_impact1.wav'],
+  whip: ['/assets/sounds/hl2/slice1.wav'],
   slingshot: ['/assets/sounds/hl2/crowbar_impact1.wav'],
   lightning: ['/assets/sounds/hl2/zap1.wav'],
 };
@@ -34,6 +35,10 @@ const WEAPON_SOUNDS: Record<string, string[]> = {
 class AudioManager {
   private cache: Map<string, HTMLAudioElement[]> = new Map();
   private screamPool: string[] = [];
+  
+  private activeScream: HTMLAudioElement | null = null;
+  private activeWeapon: HTMLAudioElement | null = null;
+  private lastScreamTime: number = 0;
 
   // Create a pool of audio elements for each sound to allow overlapping playback
   private getAudioFromPool(src: string): HTMLAudioElement {
@@ -61,6 +66,13 @@ class AudioManager {
   public playScreamRoundRobin() {
     if (useGameStore.getState().muted) return;
     
+    const now = Date.now();
+    // Prevent screams from overlapping or restarting too frequently (500ms interval)
+    if (now - this.lastScreamTime < 500) {
+      return;
+    }
+    this.lastScreamTime = now;
+    
     if (this.screamPool.length === 0) {
       this.screamPool = [...SCREAM_SOUNDS];
       // Shuffle array
@@ -70,10 +82,16 @@ class AudioManager {
       }
     }
     
+    if (this.activeScream) {
+      this.activeScream.pause();
+      this.activeScream.currentTime = 0;
+    }
+
     const src = this.screamPool.pop();
     if (src) {
       const audio = this.getAudioFromPool(src);
       audio.currentTime = 0;
+      this.activeScream = audio;
       audio.play().catch(console.warn);
     }
   }
@@ -83,12 +101,27 @@ class AudioManager {
     const list = WEAPON_SOUNDS[tool];
     if (!list || list.length === 0) return;
     const src = list[Math.floor(Math.random() * list.length)];
+    
+    if (this.activeWeapon) {
+      this.activeWeapon.pause();
+      this.activeWeapon.currentTime = 0;
+    }
+
     const audio = this.getAudioFromPool(src);
     audio.currentTime = 0;
+    this.activeWeapon = audio;
     audio.play().catch(console.warn);
   }
 
   public stopAll() {
+    if (this.activeScream) {
+      this.activeScream.pause();
+      this.activeScream.currentTime = 0;
+    }
+    if (this.activeWeapon) {
+      this.activeWeapon.pause();
+      this.activeWeapon.currentTime = 0;
+    }
     this.cache.forEach((pool) => {
       pool.forEach((audio) => {
         audio.pause();

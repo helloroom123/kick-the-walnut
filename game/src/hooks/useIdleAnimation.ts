@@ -8,15 +8,19 @@ export function useIdleAnimation(id: string, isVisible: boolean, characterState:
     const el = idleRef.current;
     if (!el || !isVisible) return;
 
-    // Handle "scared" pose (holding head)
+    // Handle "scared" pose (holding head) - floating hands tremble
     if (characterState === 'scared') {
-      if (id === 'leftHand') {
-        gsap.to(el, { rotation: 120, x: 20, y: -40, duration: 0.3, ease: 'power2.out' });
-        return;
+      if (id === 'scaredLeftHand') {
+        const tremble = gsap.timeline({ repeat: -1, yoyo: true });
+        tremble.to(el, { x: -95, y: -45, rotation: -15, duration: 0.05 })
+               .to(el, { x: -105, y: -55, rotation: -10, duration: 0.05 });
+        return () => { tremble.kill(); };
       }
-      if (id === 'rightHand') {
-        gsap.to(el, { rotation: -120, x: -20, y: -40, duration: 0.3, ease: 'power2.out' });
-        return;
+      if (id === 'scaredRightHand') {
+        const tremble = gsap.timeline({ repeat: -1, yoyo: true });
+        tremble.to(el, { x: 95, y: -45, rotation: 15, duration: 0.05 })
+               .to(el, { x: 105, y: -55, rotation: 10, duration: 0.05 });
+        return () => { tremble.kill(); };
       }
     }
 
